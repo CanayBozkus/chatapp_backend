@@ -14,9 +14,16 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    chatRooms: [{
-        type: Schema.Types.ObjectId,
-        ref: 'ChatRoom'
+    lastSeen: {
+        type: Date,
+        default: null
+    },
+    showLastSeen: {
+        type: Boolean,
+        default: true,
+    },
+    contacts: [{
+        type: String,
     }]
 }, { timestamps: { createdAt: 'createdAt' } })
 

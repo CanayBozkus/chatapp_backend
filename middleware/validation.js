@@ -1,3 +1,51 @@
+const Validation = {
+    toBeCheckedFields: [],
+    body: {},
+
+    exec(){
+        return (req, res, next) => {
+            const missingFields = []
+            for(let field of this.toBeCheckedFields){
+                !Object.keys(req.body).includes(field) ?  missingFields.push(field) : null
+            }
+
+            if(missingFields.length){
+                return res.json({
+                    success: false,
+                    message: 'Missing parameters: ' + missingFields.join(', ')
+                })
+            }
+            next()
+        }
+    },
+    email(paramName) {
+        this.toBeCheckedFields.push(paramName)
+        return this
+    },
+    string(paramName){
+        this.toBeCheckedFields.push(paramName)
+        return this
+    },
+    integer(paramName){
+        this.toBeCheckedFields.push(paramName)
+        return this
+    },
+    phoneNumber(paramName){
+        this.toBeCheckedFields.push(paramName)
+        return this
+    },
+    array(paramName){
+        this.toBeCheckedFields.push(paramName)
+        return this
+    },
+    dateTime(paramName){
+        this.toBeCheckedFields.push(paramName)
+        return this
+    }
+
+}
+
+/*
 class Validation {
     constructor(body) {
         this.body = body
@@ -44,6 +92,6 @@ class Validation {
     }
 }
 
-module.exports =  (body) => {
-    return new Validation(body)
-}
+ */
+
+module.exports =  Validation

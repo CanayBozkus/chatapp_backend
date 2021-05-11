@@ -7,6 +7,7 @@ const connections = require('../cache').connections
 const socket = require('../socket')
 
 exports.login = async (req, res, next) => {
+    /*
     try{
         Validation(req.body)
             .string('phoneNumber')
@@ -16,7 +17,7 @@ exports.login = async (req, res, next) => {
             success: false,
             message: 'Missing parameters ' + e.message,
         })
-    }
+    }*/
 
     const phoneNumber = req.body.phoneNumber.replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, '')
 
@@ -45,6 +46,7 @@ exports.login = async (req, res, next) => {
 }
 
 exports.signup = async (req, res, next) => {
+    /*
     try{
         Validation(req.body)
             .string('name')
@@ -55,10 +57,10 @@ exports.signup = async (req, res, next) => {
             success: false,
             message: 'Missing parameters ' + e.message,
         })
-    }
+    }*/
 
     const name = req.body.name
-    //const password = req.body.password
+    const contactsPhoneNumbers = req.body.contactsPhoneNumbers
     const phoneNumber = req.body.phoneNumber
         .replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, '')
 
@@ -79,16 +81,21 @@ exports.signup = async (req, res, next) => {
         }
 
         //const hashedPassword = await bcript.hash(password, 12)
+        const registeredContacts = await User.find({phoneNumber: {$in: contactsPhoneNumbers}})
+        const registeredContactsPhoneNumbers = registeredContacts.map(user => user.phoneNumber)
 
         const user = new User({
             name,
-            phoneNumber
+            phoneNumber,
+            contacts: registeredContactsPhoneNumbers,
+            lastSeen: null
         })
 
         const result = await user.save()
 
         res.json({
-            "success": true
+            "success": true,
+            registeredContactsPhoneNumbers,
         })
     }
 
@@ -101,6 +108,7 @@ exports.signup = async (req, res, next) => {
 }
 
 exports.getRegisteredUsersFromContacts = async (req, res, next) => {
+    /*
     try{
         Validation(req.body)
             .array('contacts')
@@ -110,7 +118,7 @@ exports.getRegisteredUsersFromContacts = async (req, res, next) => {
             success: false,
             message: 'Missing parameters ' + e.message,
         })
-    }
+    }*/
 
     const contactsRaw = req.body.contacts
     const contacts = contactsRaw.map(number => number.replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, ''))
