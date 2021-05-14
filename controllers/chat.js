@@ -1,9 +1,16 @@
+const { validationResult } = require('express-validator');
+
 const Message = require('../models/message')
 const ChatRoom = require('../models/chatRoom')
 const socket = require('../socket')
 const connections = require('../cache').connections
 
 exports.sendMessage = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const message = req.body.message
         const time = req.body.sendTime
@@ -46,7 +53,11 @@ exports.sendMessage = async (req, res, next) => {
 }
 
 exports.sendMessageSeenInfo = async (req, res, next) => {
-    console.log(req.body)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     const seenTime = req.body.seenTime
     const receiverPhoneNumber = req.body.to
     const senderPhoneNumber = req.userPhoneNumber

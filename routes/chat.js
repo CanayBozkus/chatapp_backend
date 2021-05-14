@@ -3,25 +3,22 @@ const express = require('express')
 const chatController = require('../controllers/chat')
 
 const loginRequired = require('../middleware/loginRequired')
-const validation = require('../middleware/validation')
+const { body } = require('express-validator');
 
 const router = express.Router()
 
 router.post('/send-message',
     loginRequired,
-    validation
-        .string('message')
-        .dateTime('sendTime')
-        .phoneNumber('to')
-        .phoneNumber('from')
-        .exec(),
-    chatController.sendMessage,
-    )
-router.post('/send-message-seen-info', loginRequired,
-    validation
-        .dateTime('seenTime')
-        .phoneNumber('to')
-        .exec(),
+    body('message').isLength({min:1}),
+    body('sendTime').isISO8601(),
+    body('to').isMobilePhone('any'),
+    body('from').isMobilePhone('any'),
+    chatController.sendMessage
+)
+router.post('/send-message-seen-info',
+    loginRequired,
+    body('seenTime').isISO8601(),
+    body('to').isMobilePhone('any'),
     chatController.sendMessageSeenInfo,
     )
 /*
@@ -34,5 +31,5 @@ router.get('/get-paginated-messages',
 )
 
 */
-router.get('/test', validation.email('email').string('string').exec(), chatController.test)
+router.get('/test', chatController.test)
 module.exports = router

@@ -2,17 +2,48 @@ const express = require('express')
 
 const userController = require('../controllers/user')
 const loginRequired = require('../middleware/loginRequired')
-const validation = require('../middleware/validation')
+const { body } = require('express-validator');
 
 const router = express.Router()
 
-router.post('/login', validation.phoneNumber('phoneNumber').exec(), userController.login)
-router.post('/signup', validation.phoneNumber('phoneNumber').string('name').exec(), userController.signup)
+router.post(
+    '/login',
+    body('phoneNumber').isMobilePhone('any'),
+    userController.login
+)
+router.post(
+    '/signup',
+    body('phoneNumber').isMobilePhone('any'),
+    body('name').isLength({min: 1}),
+    body('contactsPhoneNumbers').isArray(),
+    userController.signup
+)
 //router.get('/find-user/:userName', userController.findUser)
-router.post('/get-registered-users-from-contacts', loginRequired, validation.array('contacts').exec(), userController.getRegisteredUsersFromContacts)
-router.post('/set-socket-connection-data', loginRequired, validation.phoneNumber('phoneNumber').string('socketID').exec(), userController.setSocketConnectionData)
-router.post('/disconnect-socket', loginRequired, validation.phoneNumber('phoneNumber').exec(), userController.disConnectSocket)
-router.post('/check-online-contacts', loginRequired, userController.checkOnlineContacts)
+router.post(
+    '/get-registered-users-from-contacts',
+    loginRequired,
+    body('contacts').isArray(),
+    userController.getRegisteredUsersFromContacts
+)
+router.post(
+    '/set-socket-connection-data',
+    loginRequired,
+    body('phoneNumber').isMobilePhone('any'),
+    body('socketID').isLength({min: 8}),
+    userController.setSocketConnectionData
+)
+router.post(
+    '/disconnect-socket',
+    loginRequired,
+    body('phoneNumber').isMobilePhone('any'),
+    userController.disConnectSocket
+)
+router.post(
+    '/check-contact-status',
+    loginRequired,
+    body('phoneNumber').isMobilePhone('any'),
+    userController.checkContactStatus
+)
 
 
 module.exports = router

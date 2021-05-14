@@ -14,7 +14,7 @@ app.use(bodyParser.json())
 
 app.use(userRouter)
 app.use(chatRouter)
-const test = 1
+
 mongoose
     .connect(MONGODB_URI)
     .then(result => {

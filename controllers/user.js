@@ -1,23 +1,17 @@
 const jwt = require('jsonwebtoken')
 const bcript = require('bcryptjs')
+const { validationResult } = require('express-validator');
 
 const User = require('../models/user')
-const Validation = require('../middleware/validation')
 const connections = require('../cache').connections
 const socket = require('../socket')
 
 exports.login = async (req, res, next) => {
-    /*
-    try{
-        Validation(req.body)
-            .string('phoneNumber')
-            .validate()
-    }catch (e){
-        return res.status(e.statusCode).json({
-            success: false,
-            message: 'Missing parameters ' + e.message,
-        })
-    }*/
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
     const phoneNumber = req.body.phoneNumber.replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, '')
 
@@ -46,30 +40,15 @@ exports.login = async (req, res, next) => {
 }
 
 exports.signup = async (req, res, next) => {
-    /*
-    try{
-        Validation(req.body)
-            .string('name')
-            .string('phoneNumber')
-            .validate()
-    }catch (e){
-        return res.status(e.statusCode).json({
-            success: false,
-            message: 'Missing parameters ' + e.message,
-        })
-    }*/
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
     const name = req.body.name
     const contactsPhoneNumbers = req.body.contactsPhoneNumbers
     const phoneNumber = req.body.phoneNumber
         .replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, '')
-
-    if(phoneNumber.length < 10) {
-        return res.status(e.statusCode).json({
-            success: false,
-            message: 'Invalid number',
-        })
-    }
 
     try {
         const existUsers = await User.find({phoneNumber: phoneNumber})
@@ -80,7 +59,6 @@ exports.signup = async (req, res, next) => {
             })
         }
 
-        //const hashedPassword = await bcript.hash(password, 12)
         const registeredContacts = await User.find({phoneNumber: {$in: contactsPhoneNumbers}})
         const registeredContactsPhoneNumbers = registeredContacts.map(user => user.phoneNumber)
 
@@ -108,17 +86,10 @@ exports.signup = async (req, res, next) => {
 }
 
 exports.getRegisteredUsersFromContacts = async (req, res, next) => {
-    /*
-    try{
-        Validation(req.body)
-            .array('contacts')
-            .validate()
-    }catch (e){
-        return res.status(e.statusCode).json({
-            success: false,
-            message: 'Missing parameters ' + e.message,
-        })
-    }*/
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
     const contactsRaw = req.body.contacts
     const contacts = contactsRaw.map(number => number.replace(/[A-Za-z\*()\s#\.,\+\/\;-]/g, ''))
@@ -136,6 +107,11 @@ exports.getRegisteredUsersFromContacts = async (req, res, next) => {
 }
 
 exports.setSocketConnectionData = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try{
         const phoneNumber = req.body.phoneNumber
         const socketID = req.body.socketID
@@ -158,6 +134,8 @@ exports.setSocketConnectionData = async (req, res, next) => {
         connections[phoneNumber] = socketID
         console.log('in connection set')
         console.log(connections)
+        user.lastSeen = null
+        await user.save()
         user.checkUnreadMessages(socketID)
         res.json({
             success: true,
@@ -170,7 +148,12 @@ exports.setSocketConnectionData = async (req, res, next) => {
     }
 }
 
-exports.disConnectSocket = (req, res, next) => {
+exports.disConnectSocket = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     const phoneNumber = req.body.phoneNumber
 
     if(!phoneNumber){
@@ -182,12 +165,39 @@ exports.disConnectSocket = (req, res, next) => {
 
     delete connections[phoneNumber]
 
+    const user = await User.findOne({phoneNumber: phoneNumber})
+    user.lastSeen = Date.now();
+    await user.save()
+    socket.getIO().emit(phoneNumber, {online: false, lastSeen: user.showLastSeen ? user.lastSeen.toISOString(): null,})
+
     res.json({
         success: true
     })
 }
 
+exports.checkContactStatus = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const phoneNumber = req.body.phoneNumber
+
+    const user = await User.findOne({phoneNumber: phoneNumber})
+
+    res.json({
+        success: true,
+        lastSeen: user.showLastSeen ? user.lastSeen?.toISOString() : null,
+        online: user.lastSeen ? false : true,
+    })
+}
+
 exports.checkOnlineContacts = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     const contactNumbers = req.body.contactsNumbers
     const userPhoneNumber = req.userPhoneNumber
     console.log(contactNumbers)
