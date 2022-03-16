@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const userRouter = require('./routes/user')
 const chatRouter = require('./routes/chat')
 
-const MONGODB_URI = 'mongodb+srv://nodejs-user:nodejsuser123.@cluster0.m8nox.mongodb.net/chatapp?retryWrites=true&w=majority'
+const MONGODB_URI = ''
 
 const app = express()
 
